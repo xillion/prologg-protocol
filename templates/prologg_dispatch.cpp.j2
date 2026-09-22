@@ -1,0 +1,38 @@
+// AUTOMATED GENERATOR TARGET - DO NOT EDIT MANUALLY
+#include "prologg_dispatch.h"
+
+// The actual table indexed by Request_XXX_tag
+const CmdHandler PROLOGG_DISPATCH_TABLE[] = {
+    [0] = nullptr,
+{% for tag_fullname, name, tag_id in tags %}
+    [{{ tag_fullname }}] = handle_{{ name }},
+{% endfor %}
+};
+
+const size_t PROLOGG_DISPATCH_COUNT = sizeof(PROLOGG_DISPATCH_TABLE) / sizeof(CmdHandler);
+
+WEAK void handle_request(Request& request, Response& response) {
+    //response = Response_init_zero;
+    std::memset(&response, 0, sizeof(Response));
+    response.command = request.which_command; //
+    
+    pb_size_t tag = request.which_command;
+
+    // Safety check: index must be within array bounds and pointer must not be null
+    if (tag > 0 && tag < PROLOGG_DISPATCH_COUNT && PROLOGG_DISPATCH_TABLE[tag] != nullptr) {
+        response.error = PROLOGG_DISPATCH_TABLE[tag](request, response);
+    } else {
+        response.error = ErrorCode_UNKNOWN_CMD; //
+    }
+}
+
+// Implementations of handlers (stubs)
+{% for tag_fullname, name, tag_id in tags %}
+WEAK ErrorCode handle_{{ name }}(const Request& req, Response& resp) {
+    // TODO: Implement handler logic
+    std::memset(&resp, 0, sizeof(Response));
+    resp.which_result = Response_data_tag;
+    resp.result.data.data.size = snprintf(reinterpret_cast<char *>(resp.result.data.data.bytes), 256, "{{ name }} handler not implemented.");
+    return ErrorCode_UNIMPLEMENTED;
+}
+{% endfor %}

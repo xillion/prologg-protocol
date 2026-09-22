@@ -1,0 +1,22 @@
+// AUTOMATED GENERATOR TARGET - DO NOT EDIT MANUALLY
+#ifndef PROLOGG_DISPATCH_H
+#define PROLOGG_DISPATCH_H
+
+#include "prologg.pb.h"
+#include "mbed.h"
+
+#ifdef __cplusplus
+// Define the signature for all command handlers using C++ references
+typedef ErrorCode (*CmdHandler)(const Request& req, Response& resp);
+
+extern const CmdHandler PROLOGG_DISPATCH_TABLE[];
+extern const size_t PROLOGG_DISPATCH_COUNT;
+
+void handle_request(Request& request, Response& response);
+// Forward declare all handlers
+{% for tag_fullname, name, tag_id in tags %}
+ErrorCode handle_{{ name }}(const Request& req, Response& resp);
+{% endfor %}
+
+#endif // __cplusplus
+#endif // PROLOGG_DISPATCH_H

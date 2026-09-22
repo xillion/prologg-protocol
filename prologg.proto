@@ -1,0 +1,294 @@
+syntax = "proto3";
+
+option optimize_for = CODE_SIZE;
+
+/* ============================================================================
+ * ENUMERATIONS
+ * ========================================================================== */
+
+enum ErrorCode {
+    SUCCESS                 = 0;
+    UNKNOWN_CMD             = 1;
+    INVALID_AREA            = 2;
+    INVALID_ADDR            = 3;
+    INVALID_SIZE            = 4;
+    WRITE_FAILED            = 5;
+    READ_FAILED             = 6;
+    ERASE_FAILED            = 7;
+    BUSY                    = 8;
+    PROTOCOL_ERROR          = 9;
+    CRC_ERROR               = 10;
+    FIRMWARE_VERSION        = 11;
+    FIRMWARE_UPDATE_FAILED  = 12;
+    PASS_INCORRECT          = 13;
+    PASS_MISSMATCH          = 14;
+    PASS_RULE_ERROR         = 15;
+    COBS_BAD_ARG            = 16;
+    COBS_BAD_PAYLOAD        = 17;
+    COBS_EXHAUSTED          = 18;
+    TIME_SET_FAILED         = 19;
+    TIME_GET_FAILED         = 20;
+    TEMP_GET_FAILED         = 21;
+    ADC_GET_FAILED          = 22;
+    ADDRESS_OUT_OF_BOUNDS   = 23;
+    DATA_SIZE_EXCEEDED      = 24;
+    INVALID_PARAMS          = 25;
+    SET_ID_ERROR            = 26;
+    UNIMPLEMENTED           = 27;
+}
+
+enum MemoryArea {
+    CONFIGS   = 0;
+    DATA      = 1;
+    ALL       = 2;
+}
+
+enum ProjectType {
+    REGULAR     = 0;
+    CALIBRATION = 1;
+    TEST        = 2;
+}
+
+enum ProjectState {
+    IDLE        = 0;
+    RUNNING     = 1;
+    DELAYED     = 2;
+    COMPLETED   = 3;
+    FAILED      = 4;
+}
+
+enum PowerConsumptionMode {
+    PWR_DEEPSLEEP = 0; //    uint64 deepsleep            = 1; // spent time (us)
+    PWR_SLEEP     = 1; //    uint64 sleep                = 2; // spent time (us)
+    PWR_LPRUN1    = 2; //    uint64 lprun                = 3;
+    PWR_FLASHR    = 3; //    uint64 flashr               = 4; // spent time (us)
+    PWR_FLASHW    = 4; //    uint64 flashw               = 5; // spent time (us)
+    PWR_IDLE      = 5; //    uint64 idle                 = 6;
+    PWR_UPTIME    = 6; //    uint64 uptime               = 7; // total uptime
+}
+
+enum TestStatus {
+    TEST_NOT_RUN = 0;
+    TEST_RUNNING = 1;
+    TEST_PASS    = 2;
+    TEST_FAIL    = 3;
+}
+
+enum TestId{
+    TEST_I2C      = 0;
+    TEST_ONEWIRE  = 1;
+    TEST_BATTERY  = 2;
+    TEST_USB      = 3;
+    TEST_LEDS     = 4;
+    TEST_MAX31888 = 5;
+    TEST_RV3129   = 6;
+    TEST_AD5142   = 7;
+    TEST_FLASH    = 8;
+}
+
+enum RebootMode {
+    NORMAL  = 0; // Простая перезагрузка
+    DFU     = 1; // Перезагрузка в загрузчик для прошивки
+    NEW_CLK = 2; // Перезагрузка с перестройкой тактовой частоты (для тестов энергопотребления)
+}
+
+/* ============================================================================
+ * COMMON STRUCTURES
+ * ========================================================================== */
+
+message DeviceInfo {
+    bytes  id                    = 1;
+    string fw_version            = 2; // Изменено на string для удобства в Си
+    string hw_version            = 3; // Изменено на string
+    uint32 protocol_version      = 4;
+    uint32 memory_configs_size   = 5;
+    uint32 memory_data_size      = 6;
+    uint32 adc_bit               = 7;
+    uint32 data_flash_start_addr = 8;
+}
+
+message BatteryParams {
+    uint32  type                = 1;
+    uint32  capacity            = 2; // nominal capacity in mAh
+    fixed32 install_date        = 3; // Unix time лучше передавать фиксированным размером
+    uint32  wear                = 4; // Износ батареи 80.45% = 8045
+}
+
+message PowerGrade{
+    PowerConsumptionMode mode = 1;
+    uint64 uS = 2;  //Microsecconds
+    uint64 uAh = 3; //MicroAmpere
+}
+message PowerConsumption {
+    repeated PowerGrade grades  = 1; //
+}
+
+message CalibrationInfo {
+    repeated float coeffs       = 1;
+    fixed32 date        = 2;
+}
+
+message AnalogParams {
+    float gain                  = 1; // от 10.0 до 200.0
+    float vref                  = 2;
+    float vfb                   = 3;
+}
+
+message Project {
+    fixed32 start_time          = 1; // Unix time
+    fixed32 end_time            = 2; // Unix time
+    uint32 interval             = 3; // от 1 до 20 сек
+    uint32 id                   = 4;
+    ProjectState state          = 5;
+    ProjectType type            = 6;
+}
+
+message raw_data{
+    bytes data = 1;
+}
+
+/* ============================================================================
+ * MEMORY COMMAND STRUCTURES
+ * ========================================================================== */
+
+message MemoryReadRequest {
+    MemoryArea area             = 1;
+    uint32 address              = 2;
+    uint32 size                 = 3;
+}
+
+message MemoryReadResponse{
+    MemoryArea area             = 1;
+    uint32 address              = 2;
+    raw_data data               = 3;
+}
+
+message MemoryWriteRequest {
+    MemoryArea area             = 1;
+    uint32 address              = 2;
+    raw_data data               = 3;
+}
+message MemoryWriteResponse {}
+
+message MemoryEraseRequest {
+    MemoryArea area             = 1;
+    uint32 address              = 2;
+    uint32 size                 = 3;
+}
+message MemoryEraseResponse {}
+
+/* ============================================================================
+ * REQUEST MESSAGES (HOST → DEVICE)
+ * ========================================================================== */
+
+message SetTime {
+    fixed32 time                = 1;
+}
+
+message SetPassword {
+    string new_pass             = 1;
+    string old_pass             = 2;
+}
+
+message UpdateFirmware {
+    string pass                 = 1;
+    uint32 size                 = 2;
+    uint32 address              = 3;
+}
+
+message TestItem {
+    uint32 id = 1;
+    TestStatus status = 2;
+}
+
+message TestReport {
+    TestId test_id = 1;
+    repeated TestItem items = 2;
+}
+
+message Empty{}
+
+message RebootRequest {
+    RebootMode mode = 1;
+    uint32 freq = 2; // Желаемая частота SYSCLK в Гц (только для NEW_CLK)
+}
+
+message Request {
+    oneof command {
+        // Команды-запросы (раньше были пустыми сообщениями, теперь просто ключи в oneof)
+        bool get_device_info                 = 1;
+        bool get_time                        = 2;
+        bool get_temperature                 = 3;
+        bool get_pressure                    = 4;
+        bool get_project                     = 5;
+        bool get_analog_params               = 6;
+        bool get_battery_voltage             = 7;
+        bool get_battery_params              = 8;
+        bool get_pwr                         = 9;
+        bool get_project_state               = 10;
+        bool reset_project                   = 11;
+        bool set_zero_offset                 = 12;
+        bool get_remaining_capacity          = 13;
+        bool get_battery_voltage_v2          = 14;
+        bool get_calibration_info            = 15;
+        bool get_test_status                 = 16;
+        // Команды с параметрами
+        fixed32 set_time                     = 17; // Передаем напрямую значение, экономим на подсообщении!
+        Project set_project                  = 18;
+        AnalogParams set_analog_params       = 19;
+        BatteryParams set_battery_params     = 20;
+        SetPassword set_password             = 21;
+        UpdateFirmware update_fw             = 22;
+        uint32 set_device_id                 = 23;
+        uint32 run_test                      = 24;
+        ProjectState set_measurement_state   = 25;
+        CalibrationInfo set_calibration_info = 26;
+        // Память
+        MemoryReadRequest  read_memory       = 27;
+        MemoryWriteRequest write_memory      = 28;
+        MemoryEraseRequest erase_memory      = 29;
+        uint32 get_test_report               = 30;
+        RebootRequest reboot                 = 31;
+    }
+}
+
+/* ============================================================================
+ * RESPONSE MESSAGES (DEVICE → HOST)
+ * ========================================================================== */
+
+message Response {
+    ErrorCode error                          = 1;
+    uint32 command                           = 2;
+    oneof result {
+        DeviceInfo device_info               = 3;
+        fixed32 time                         = 4; // Изменено на fixed32 для экономии varint-байтов
+        uint32 adc_temperature               = 5; // Сырой код АЦП температуры (разрядность — DeviceInfo.adc_bit)
+        uint32 adc_pressure                  = 6; // Сырой код АЦП давления
+        Project project                      = 7;
+        uint32 adc_battery_voltage           = 8; // Сырой код АЦП напряжения батареи
+        BatteryParams battery_params         = 9;
+        AnalogParams analog_params           = 10;
+        ProjectState project_state           = 11;
+        PowerConsumption power_consumption   = 12;
+        CalibrationInfo calibration_info     = 13;
+        raw_data data                        = 14;
+        MemoryReadResponse  read_memory      = 15;
+        MemoryWriteResponse write_memory     = 16;
+        MemoryEraseResponse erase_memory     = 17;
+        Empty empty                          = 18;
+        TestReport test_report               = 19;
+    }
+}
+
+/* ============================================================================
+ * CONFIGURATION STORAGE CONTAINER
+ * ========================================================================== */
+
+message ConfigStorage {
+    BatteryParams battery_params         = 1;
+    AnalogParams analog_params           = 2;
+    CalibrationInfo calibration_info     = 3;
+    Project project                      = 4;
+    PowerConsumption power_consumption   = 5;
+    string pass                          = 6;
+}

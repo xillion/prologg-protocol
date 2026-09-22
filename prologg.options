@@ -1,0 +1,39 @@
+# ============================================================================
+# GLOBAL OPTIONS
+# ============================================================================
+Request.command                      type:FT_STATIC
+Response.result                      type:FT_STATIC
+
+# ============================================================================
+# STRING & BYTES MAX SIZES
+# ============================================================================
+DeviceInfo.id                        max_size:12
+DeviceInfo.fw_version                max_size:17
+DeviceInfo.hw_version                max_size:17
+
+# Ограничения строк (пароли)
+SetPassword.new_pass                 max_size:32
+SetPassword.old_pass                 max_size:32
+UpdateFirmware.pass                  max_size:32
+ConfigStorage.pass                   max_size:32
+
+# Буферы данных для памяти
+raw_data.data                        max_size:512
+TestReport.error_log                 max_size:64
+# ============================================================================
+# REPEATED FIELDS
+# ============================================================================
+CalibrationInfo.coeffs               max_count:7
+PowerConsumption.grades              max_count:7
+TestReport.items                     max_count:7
+# ============================================================================
+# MEMORY OPTIMIZATION
+# ============================================================================
+Request                               submsg_callback:false
+Response                              submsg_callback:false
+
+ConfigStorage.battery_params         type:FT_STATIC
+ConfigStorage.analog_params          type:FT_STATIC
+ConfigStorage.project                type:FT_STATIC
+ConfigStorage.power_consumption      type:FT_STATIC
+ConfigStorage.calibration_info       type:FT_STATIC
