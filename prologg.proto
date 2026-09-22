@@ -100,7 +100,7 @@ message DeviceInfo {
     bytes  id                    = 1;
     string fw_version            = 2; // Изменено на string для удобства в Си
     string hw_version            = 3; // Изменено на string
-    uint32 protocol_version      = 4;
+    uint32 protocol_version      = 4; // Бампать при любом breaking-изменении wire-формата ниже (текущее: 2)
     uint32 memory_configs_size   = 5;
     uint32 memory_data_size      = 6;
     uint32 adc_bit               = 7;
@@ -196,11 +196,15 @@ message UpdateFirmware {
     uint32 address              = 3;
 }
 
+// Один run_test(TestId) запускает один тест, который внутри состоит из
+// нескольких под-проверок. TestItem.id — локальный номер шага ВНУТРИ
+// этого теста (не значение enum TestId).
 message TestItem {
     uint32 id = 1;
     TestStatus status = 2;
 }
 
+// test_id — какой тест отчитывается, items — под-проверки этого теста.
 message TestReport {
     TestId test_id = 1;
     repeated TestItem items = 2;
@@ -262,7 +266,7 @@ message Response {
     oneof result {
         DeviceInfo device_info               = 3;
         fixed32 time                         = 4; // Изменено на fixed32 для экономии varint-байтов
-        uint32 adc_temperature               = 5; // Сырой код АЦП температуры (разрядность — DeviceInfo.adc_bit)
+        sint32 adc_temperature               = 5; // Signed: значение датчика MAX31888 (может быть отрицательным)
         uint32 adc_pressure                  = 6; // Сырой код АЦП давления
         Project project                      = 7;
         uint32 adc_battery_voltage           = 8; // Сырой код АЦП напряжения батареи
