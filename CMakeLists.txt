@@ -27,14 +27,19 @@ add_custom_command(
 # 4. Library Definition
 add_library(prologg STATIC
     ${GEN_CPP}
+    transport/prologg_transport.cpp
 )
 
 # 5. Include Directories
-target_include_directories(prologg PUBLIC 
+target_include_directories(prologg PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_CURRENT_BINARY_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}/nanopb
 )
 
 # # 6. Link Libraries
-target_link_libraries(prologg PUBLIC proto mbed-core-flags) # This is needed so
+# nanocobs/mbed-usb: needed by transport/prologg_transport.cpp (COBS framing,
+# USBSerial). Both targets are defined by sibling add_subdirectory() calls in
+# the consuming firmware's top-level CMakeLists.txt; resolved at generate
+# time regardless of add_subdirectory() order.
+target_link_libraries(prologg PUBLIC proto mbed-core-flags nanocobs mbed-usb) # This is needed so
