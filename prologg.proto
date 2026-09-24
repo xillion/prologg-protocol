@@ -44,9 +44,10 @@ enum MemoryArea {
 }
 
 enum ProjectType {
-    REGULAR     = 0;
-    CALIBRATION = 1;
-    TEST        = 2;
+    REGULAR          = 0;
+    CALIBRATION      = 1;
+    TEST_REGULAR     = 2;
+    TEST_CALIBRATION = 3;
 }
 
 enum ProjectState {
@@ -75,15 +76,17 @@ enum TestStatus {
 }
 
 enum TestId{
-    TEST_I2C      = 0;
-    TEST_ONEWIRE  = 1;
-    TEST_BATTERY  = 2;
-    TEST_USB      = 3;
-    TEST_LEDS     = 4;
-    TEST_MAX31888 = 5;
-    TEST_RV3129   = 6;
-    TEST_AD5142   = 7;
-    TEST_FLASH    = 8;
+    TEST_I2C             = 0;
+    TEST_ONEWIRE         = 1;
+    TEST_BATTERY         = 2;
+    TEST_USB             = 3;
+    TEST_LEDS            = 4;
+    TEST_MAX31888        = 5;
+    TEST_RV3129          = 6;
+    TEST_AD5142          = 7;
+    TEST_FLASH           = 8;
+    TEST_STORAGE_MANAGER = 9;
+    TEST_PROJECT         = 10;
 }
 
 enum RebootMode {
