@@ -22,7 +22,7 @@ raw_data.data                        max_size:512
 # ============================================================================
 # REPEATED FIELDS
 # ============================================================================
-CalibrationInfo.coeffs               max_count:7
+CalibrationInfo.coeffs               max_count:6
 PowerConsumption.grades              max_count:7
 TestReport.items                     max_count:7
 # ============================================================================
