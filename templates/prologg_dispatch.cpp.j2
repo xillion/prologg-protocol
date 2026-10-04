@@ -26,13 +26,12 @@ WEAK void handle_request(Request& request, Response& response) {
     }
 }
 
-// Implementations of handlers (stubs)
+// Implementations of handlers (stubs): commands the firmware does not
+// implement answer UNIMPLEMENTED. Firmware overrides them with strong symbols.
 {% for tag_fullname, name, tag_id in tags %}
 WEAK ErrorCode handle_{{ name }}(const Request& req, Response& resp) {
-    // TODO: Implement handler logic
-    std::memset(&resp, 0, sizeof(Response));
-    resp.which_result = Response_data_tag;
-    resp.result.data.data.size = snprintf(reinterpret_cast<char *>(resp.result.data.data.bytes), 256, "{{ name }} handler not implemented.");
+    (void)req;
+    (void)resp;
     return ErrorCode_UNIMPLEMENTED;
 }
 {% endfor %}
